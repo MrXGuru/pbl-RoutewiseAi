@@ -3,7 +3,7 @@
 
 <div align="center">
 
-![RouteWise AI Hero](https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80)
+![RouteWise AI Dashboard](screenshots/dashboard.png)
 
 [![Python](https://img.shields.io/badge/Python-3.8+-FFD43B?style=for-the-badge&logo=python&logoColor=blue)](https://python.org)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://javascript.com)
@@ -115,17 +115,31 @@
 </tr>
 </table>
 
----
-
-## 🎮 **INTERACTIVE DEMO**
+## 📸 **UI SHOWCASE**
 
 <div align="center">
 
-![Route Demo](https://images.unsplash.com/photo-1569154941061-e231b4725ef1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=600&q=80)
+### 🔐 Premium Authentication Experience
+![Login Screen](screenshots/login.png)
+*Glassmorphism login and signup interface, seamlessly leading you to your smart travel dashboard.*
 
-### 🌐 **[🔴 LIVE DEMO - CLICK HERE](https://routewise-ai-demo.herokuapp.com)** 
+---
 
-*Experience RouteWise AI in action with real traffic data!*
+### 🌤️ Live Weather Route Segmentation
+![Delay Prediction](screenshots/delay_prediction.png)
+*Granular 6-chunk weather analysis detailing temperature, humidity, and severity along your exact route predicting active delays.*
+
+---
+
+### 🚇 AI-Powered Transport Options
+![Transport Options](screenshots/transport.png)
+*Intelligently scored multimodal transport options comparing trains, buses, cabs, and flights by cost and speed efficiency.*
+
+---
+
+### 👤 User & Vehicle Management
+![Profile](screenshots/profile.png)
+*Detailed profile configurations enabling custom vehicle organization and preferences for precision routing.*
 
 </div>
 
