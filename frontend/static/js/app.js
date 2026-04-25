@@ -244,15 +244,93 @@ document.addEventListener('DOMContentLoaded', () => {
             lastContext.traffic_level = data.traffic_level;
             lastContext.weather_score = data.weather_score;
 
+            const weatherEmoji = (c) => {
+                const m = { 'clear': '☀️', 'clouds': '☁️', 'rain': '🌧️', 'drizzle': '🌦️', 'thunderstorm': '⛈️', 'snow': '🌨️', 'mist': '🌫️', 'haze': '🌫️', 'fog': '🌫️', 'smoke': '💨', 'dust': '💨' };
+                return m[c] || '🌤️';
+            };
+
+            const weatherSegmentsHTML = (data.weather_segments && data.weather_segments.length > 0)
+                ? data.weather_segments.map((seg, idx) => {
+                    const severity = seg.severity || 1;
+                    let borderColor = 'border-emerald-500/50';
+                    let sevLabel = 'Clear';
+                    let sevTextColor = 'text-emerald-400';
+                    if (severity >= 7) { borderColor = 'border-red-500/50'; sevLabel = 'Severe'; sevTextColor = 'text-red-400'; }
+                    else if (severity >= 5) { borderColor = 'border-amber-500/50'; sevLabel = 'Moderate'; sevTextColor = 'text-amber-400'; }
+                    else if (severity >= 3) { borderColor = 'border-yellow-400/50'; sevLabel = 'Mild'; sevTextColor = 'text-yellow-400'; }
+
+                    const iconUrl = seg.icon ? `https://openweathermap.org/img/wn/${seg.icon}@2x.png` : '';
+                    const emoji = weatherEmoji(seg.condition);
+                    const shortLoc = seg.location ? seg.location.split(',').slice(0, 2).join(',') : 'En Route';
+
+                    return `
+                    <div class="weather-chunk-card border ${borderColor} rounded-2xl p-4 flex flex-col shadow-lg" style="background: rgba(20, 20, 40, 0.7); backdrop-filter: blur(12px);">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-[10px] font-bold text-purple-300">${seg.segment_number}</div>
+                                <span class="text-[10px] font-medium text-gray-400 uppercase tracking-wider">${seg.segment_label}</span>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${sevTextColor}" style="background: rgba(255,255,255,0.06);">${sevLabel}</span>
+                        </div>
+
+                        <p class="text-xs text-gray-300 mb-2 truncate" title="${seg.location}"><i class="fas fa-map-marker-alt mr-1 text-purple-400 text-[10px]"></i>${shortLoc}</p>
+
+                        <div class="flex items-center gap-3 mb-2">
+                            ${iconUrl ? `<img src="${iconUrl}" alt="${seg.condition}" class="w-12 h-12 -ml-1 drop-shadow-lg">` : `<span class="text-3xl">${emoji}</span>`}
+                            <div>
+                                <p class="text-sm font-bold text-white capitalize">${seg.condition}</p>
+                                <p class="text-[10px] text-gray-400 capitalize">${seg.description || ''}</p>
+                                ${seg.temperature !== null ? `<p class="text-xl font-black text-white">${seg.temperature}<span class="text-xs font-normal text-gray-400">°C</span></p>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                            ${seg.feels_like !== null ? `<div class="flex items-center gap-1"><i class="fas fa-temperature-half text-blue-400 text-[10px] w-3"></i><span class="text-gray-400">Feels</span><span class="text-white font-semibold ml-auto">${seg.feels_like}°</span></div>` : ''}
+                            ${seg.humidity !== null ? `<div class="flex items-center gap-1"><i class="fas fa-droplet text-cyan-400 text-[10px] w-3"></i><span class="text-gray-400">Humidity</span><span class="text-white font-semibold ml-auto">${seg.humidity}%</span></div>` : ''}
+                            ${seg.wind_speed !== null ? `<div class="flex items-center gap-1"><i class="fas fa-wind text-teal-400 text-[10px] w-3"></i><span class="text-gray-400">Wind</span><span class="text-white font-semibold ml-auto">${seg.wind_speed} m/s</span></div>` : ''}
+                            <div class="flex items-center gap-1"><i class="fas fa-road text-purple-400 text-[10px] w-3"></i><span class="text-gray-400">Dist.</span><span class="text-white font-semibold ml-auto">${seg.distance_km} km</span></div>
+                        </div>
+
+                        <p class="text-[10px] text-gray-500 mt-2 pt-2 border-t border-gray-700/30 flex items-center"><i class="fas fa-clock mr-1"></i>ETA: ${seg.estimated_arrival}</p>
+                    </div>`;
+                }).join('')
+                : '';
+
             const resultHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
-                <div><p class="text-sm text-gray-400">Distance</p><p class="text-xl font-bold text-blue-300">${data.distance_km.toFixed(1)} km</p></div>
-                <div><p class="text-sm text-gray-400">Base Travel</p><p class="text-xl font-bold text-white">${Math.round(data.base_travel_minutes)} min</p></div>
-                <div><p class="text-sm text-gray-400">Predicted Delay</p><p class="text-xl font-bold text-purple-300">+${data.predicted_delay_minutes.toFixed(1)} min</p></div>
-                <div><p class="text-sm text-gray-400">Target Weather</p><p class="text-xl font-bold text-white capitalize">${data.weather}</p></div>
-                <div><p class="text-sm text-gray-400">Model Confidence</p><p class="text-xl font-bold text-orange-300">${data.confidence_score}</p></div>
-                <div><p class="text-sm text-gray-400">Est. Total Time</p><p class="text-xl font-bold text-green-400">${Math.round(data.total_estimated_time)} min</p></div>
-            </div>`;
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 text-center mb-8">
+                <div class="p-4 rounded-xl" style="background: rgba(20, 20, 40, 0.5); border: 1px solid rgba(255,255,255,0.06);">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Distance</p>
+                    <p class="text-2xl font-black text-blue-300">${data.distance_km.toFixed(1)} <span class="text-sm font-normal">km</span></p>
+                </div>
+                <div class="p-4 rounded-xl" style="background: rgba(20, 20, 40, 0.5); border: 1px solid rgba(255,255,255,0.06);">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Base Travel</p>
+                    <p class="text-2xl font-black text-white">${Math.round(data.base_travel_minutes)} <span class="text-sm font-normal text-gray-400">min</span></p>
+                </div>
+                <div class="p-4 rounded-xl" style="background: rgba(20, 20, 40, 0.5); border: 1px solid rgba(255,255,255,0.06);">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Predicted Delay</p>
+                    <p class="text-2xl font-black text-purple-300">+${data.predicted_delay_minutes.toFixed(1)} <span class="text-sm font-normal">min</span></p>
+                </div>
+                <div class="p-4 rounded-xl" style="background: rgba(20, 20, 40, 0.5); border: 1px solid rgba(255,255,255,0.06);">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Est. Total Time</p>
+                    <p class="text-2xl font-black text-green-400">${Math.round(data.total_estimated_time)} <span class="text-sm font-normal">min</span></p>
+                </div>
+            </div>
+            ${weatherSegmentsHTML ? `
+            <div>
+                <button id="weather-dropdown-toggle" class="w-full flex items-center justify-between py-3 px-4 rounded-xl mb-4 cursor-pointer transition-all duration-300 hover:bg-white/5" style="background: rgba(20, 20, 40, 0.4); border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-cloud-sun text-purple-400"></i>
+                        <span class="text-base font-bold text-white">Weather Along Your Route</span>
+                        <span class="text-[10px] font-normal text-gray-500 uppercase tracking-wider ml-1">${data.weather_segments.length} segments • Live forecast</span>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 text-sm weather-dropdown-icon transition-transform duration-300"></i>
+                </button>
+                <div id="weather-dropdown-content" class="weather-dropdown-body">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 weather-timeline">
+                        ${weatherSegmentsHTML}
+                    </div>
+                </div>
+            </div>` : ''}`;
             showResults('Delay Prediction Result', resultHTML);
 
             drawRouteOnMap(data.stops, data.route_path);
@@ -363,6 +441,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = header.querySelector('.fa-chevron-down');
             icon.classList.toggle('rotate-180');
             if (content.style.maxHeight) { content.style.maxHeight = null; } else { content.style.maxHeight = content.scrollHeight + "px"; }
+        }
+
+        // Weather dropdown toggle
+        const dropdownBtn = e.target.closest('#weather-dropdown-toggle');
+        if (dropdownBtn) {
+            const body = document.getElementById('weather-dropdown-content');
+            const icon = dropdownBtn.querySelector('.weather-dropdown-icon');
+            body.classList.toggle('open');
+            icon.classList.toggle('rotate-180');
         }
 
         // New event listener for the details toggle button
