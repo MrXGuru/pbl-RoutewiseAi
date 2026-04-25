@@ -3,8 +3,6 @@
 
 <div align="center">
 
-![RouteWise AI Dashboard](screenshots/dashboard.png)
-
 [![Python](https://img.shields.io/badge/Python-3.8+-FFD43B?style=for-the-badge&logo=python&logoColor=blue)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://javascript.com)
@@ -33,31 +31,26 @@ RouteWise AI is a complete full-stack web application designed to optimize trave
 <div align="center">
 
 ### 🔐 Multi-Screen Authentication
-![Login Screen](screenshots/login.png)
 *Premium glassmorphism dashboard login and interactive signup flows.*
 
 ---
 
 ### 🗺️ Intelligent Dashboard
-![Dashboard](screenshots/dashboard.png)
 *Interactive Leaflet maps embedded with real-time multi-stop routing forms.*
 
 ---
 
 ### 🌤️ Live Weather Segmentation
-![Delay Prediction](screenshots/delay_prediction.png)
 *Granular 6-chunk weather analysis detailing wind, humidity, and temperature along your exact route predicting active delays.*
 
 ---
 
 ### 🚇 Transport AI Finder
-![Transport Options](screenshots/transport.png)
 *Automatically scored multimodal transport options comparing trains, buses, and flights exclusively on cost and speed efficiency.*
 
 ---
 
 ### 👤 Profile & Vehicle Management
-![Profile](screenshots/profile.png)
 *Organize your vehicles and user settings seamlessly directly within the app.*
 
 </div>
