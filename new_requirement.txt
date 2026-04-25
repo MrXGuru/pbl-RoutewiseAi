@@ -13,9 +13,11 @@ psycopg2-binary
 pydantic
 email-validator
 passlib[bcrypt]
+bcrypt
 
 # External requests
 requests
+aiohttp
 
 # Data Processing & ML
 pandas

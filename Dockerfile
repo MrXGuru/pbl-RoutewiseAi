@@ -4,16 +4,21 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
-# Install dependencies required for psycopg2 or other packages if needed
+# Add the /app directory to the PYTHONPATH to ensure imports work correctly
+ENV PYTHONPATH=/app
+
+# Install build dependencies required for compiling Python packages (like pandas, scikit-learn, bcrypt, psycopg2)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
+    build-essential \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
 COPY new_requirement.txt .
 
-# Install Python requirements
-RUN pip install --no-cache-dir -r new_requirement.txt
+# Install Python requirements (timeout increased for ML packages)
+RUN pip install --no-cache-dir --default-timeout=100 -r new_requirement.txt
 
 # Copy the rest of the application
 COPY . .
