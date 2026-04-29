@@ -26,6 +26,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable not set.")
 
+DATABASE_URL = DATABASE_URL.strip()
+
 # SQLAlchemy 1.4+ requires "postgresql://" instead of "postgres://"
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
