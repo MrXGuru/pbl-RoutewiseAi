@@ -43,11 +43,12 @@ def create_tables():
         connection.execute(text("""
         CREATE TABLE vehicles (
             id SERIAL PRIMARY KEY,
-            make VARCHAR(100),
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            vehicle_type VARCHAR(20) NOT NULL,
+            license_plate VARCHAR(50),
             model VARCHAR(100),
-            year INTEGER,
-            license_plate VARCHAR(50) UNIQUE,
-            owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+            color VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """))
 
