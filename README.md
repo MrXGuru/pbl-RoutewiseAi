@@ -1,139 +1,114 @@
-# 🌟 RouteWise AI
-*Next-Generation Smart Travel Planning & Route Navigation Dashboard*
-
 <div align="center">
+  <img src="https://img.shields.io/badge/Status-Live%20on%20Render-success?style=for-the-badge&logo=render" alt="Status" />
+  <img src="https://img.shields.io/badge/Database-Supabase-3ECF8E?style=for-the-badge&logo=supabase" alt="Database" />
+  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi" alt="Backend" />
+  <img src="https://img.shields.io/badge/Frontend-Vanilla%20JS%20%7C%20TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Frontend" />
+  
+  <br />
+  <br />
+  
+  <h1>🚀 RouteWise AI</h1>
+  <p><b>Next-Generation Route Optimization & Intelligent Transport Recommendations</b></p>
 
-[![Python](https://img.shields.io/badge/Python-3.8+-FFD43B?style=for-the-badge&logo=python&logoColor=blue)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://javascript.com)
-[![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
+  <p>RouteWise AI is a premium, AI-powered travel platform designed to mathematically optimize your road trips and intelligently recommend multi-modal transport options across India. Built with a sleek glassmorphism UI and powered by a robust Python backend.</p>
 
+  <br />
 </div>
 
+## ✨ Key Features
+
+🚗 **AI Route Optimization (Traveling Salesperson)**
+Utilizes a powerful **Genetic Algorithm** seeded with a greedy nearest-neighbor approach and refined with **2-Opt local search**. It calculates routes using *live traffic data* from the TomTom API, not just straight-line distances.
+
+⛅ **Intelligent Delay Prediction**
+Predicts travel delays by analyzing route segments against real-time weather conditions (OpenWeatherMap) and live traffic incidents.
+
+🚊 **Smart Transport Options**
+Instantly query a comprehensive database of **38,000+ real-world flight, train, and bus routes** across India to find the most cost-effective and fastest travel methods.
+
+👤 **Persistent Garage & Profiles**
+Secure user authentication allows users to maintain a persistent profile and virtual "Garage" to track their vehicles across devices.
+
 ---
 
-RouteWise AI is a complete full-stack web application designed to optimize travel planning by integrating live map routing, granular weather delay forecasting, and multimodal transport cost comparisons into a single premium interface.
+## 🛠️ Technology Stack
 
-**Created by Team MapSquad**: Nandan Garg, Ayush Juyal, and Avish Pradhan.
+### Backend
+- **Framework:** FastAPI (Python)
+- **Database:** PostgreSQL hosted on Supabase
+- **ORM:** SQLAlchemy (with ultra-fast `execute_values` bulk inserts)
+- **Algorithms:** Genetic Algorithms, 2-Opt Refinement, Asynchronous API pooling
 
-## ✨ Core Features
+### Frontend
+- **Design:** Modern Glassmorphism & Micro-animations
+- **Styling:** TailwindCSS
+- **Mapping:** Leaflet.js
+- **Interactivity:** Vanilla JavaScript
 
-* 🗺️ **Intelligent Leaflet Maps**: Interactive geographical rendering allowing point-to-point map visualization built with Leaflet.js.
-* 🌤️ **Granular Weather Segmentation**: The backend divides user routes into 6 distinct chunks, using asynchronous processing via `aiohttp` to instantly fetch location-specific weather segments (Temperature, Humidity, Wind, Condition) from the OpenWeatherMap API, giving precise delay factors.
-* 🚇 **Transport Finder**: Cost and travel-time comparisons among flights, trains, and buses dynamically scored by an internal algorithm to find the "Cheapest" and "Fastest" multimodal options.
-* 🔐 **Glassmorphism UI**: A highly polished, modern login, signup, and dashboard experience designed with pure CSS glassmorphism, responsive grid layouts, and smooth transition animations.
-* 👤 **User Profiles & Vehicles**: Manage personal profile parameters and configured vehicles seamlessly within the dashboard.
+### External APIs
+- **TomTom Routing API:** Live traffic, base travel time, and route pathing.
+- **OpenWeatherMap API:** Live weather segment analysis.
+- **TomTom Geocoding API:** Coordinate resolution.
 
 ---
 
-## 📸 **UI SHOWCASE**
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.10+
+- PostgreSQL (Supabase recommended)
+- API Keys for TomTom and OpenWeatherMap
+
+### Local Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/MrXGuru/pbl-RoutewiseAi.git
+   cd pbl-RoutewiseAi
+   ```
+
+2. **Set up Virtual Environment**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure Environment Variables**
+   Create a `.env` file in the root directory:
+   ```env
+   DATABASE_URL=postgresql://[user]:[password]@[pooler-url]:6543/postgres
+   TOMTOM_API_KEY=your_tomtom_key
+   OWM_API_KEY=your_openweathermap_key
+   ```
+
+5. **Load the Database**
+   *Note: Ensure your `flight`, `train`, and `bus` JSON datasets are in the root folder.*
+   ```bash
+   python load_db.py
+   ```
+
+6. **Run the Application**
+   ```bash
+   uvicorn backend.main:app --reload
+   ```
+   Open `http://127.0.0.1:8000` in your browser.
+
+---
+
+## 🧠 How the AI Optimizer Works
+Our `optimizer.py` avoids simple point-to-point drawing. 
+1. The backend triggers parallel asynchronous calls to TomTom to build a true **Cost Matrix** of actual driving times in seconds.
+2. A **Genetic Algorithm** simulates generations of route mutations to find the fastest sequence of stops.
+3. A final **2-Opt Refinement** pass untangles any crossing paths.
+4. The backend returns a hyper-optimized JSON payload, which the frontend visualizes instantly using Leaflet.js.
+
+---
 
 <div align="center">
-
-### 🔐 Multi-Screen Authentication
-*Premium glassmorphism dashboard login and interactive signup flows.*
-
----
-
-### 🗺️ Intelligent Dashboard
-*Interactive Leaflet maps embedded with real-time multi-stop routing forms.*
-
----
-
-### 🌤️ Live Weather Segmentation
-*Granular 6-chunk weather analysis detailing wind, humidity, and temperature along your exact route predicting active delays.*
-
----
-
-### 🚇 Transport AI Finder
-*Automatically scored multimodal transport options comparing trains, buses, and flights exclusively on cost and speed efficiency.*
-
----
-
-### 👤 Profile & Vehicle Management
-*Organize your vehicles and user settings seamlessly directly within the app.*
-
+  <b>Designed with ❤️ by Team MapSquad</b>
 </div>
-
----
-
-## 💎 **TECHNOLOGY STACK**
-
-### 🎨 Frontend
-* **Core**: Vanilla HTML5, CSS3, ES6 JavaScript
-* **Mapping**: Leaflet.js
-* **Styling**: Custom CSS Framework with Glassmorphism
-* **Icons**: FontAwesome 6
-
-### 🚀 Backend
-* **Server Framework**: FastAPI (Python 3.8+)
-* **Asynchronous Networking**: `asyncio` & `aiohttp` for parallel external API resolution
-* **Database**: SQLAlchemy (SQLite)
-
-### 📡 External APIs
-* **TomTom Traffic API**: Powers the live geo-routing and driving estimations.
-* **OpenWeatherMap API**: Powers the segmented weather grid and conditions.
-
----
-
-## 🚀 **GETTING STARTED**
-
-### 1️⃣ Clone the Repository
-```bash
-git clone https://github.com/MrXGuru/pbl-RoutewiseAi.git
-cd routewiseAI_final_22
-```
-
-### 2️⃣ Create & Activate Virtual Environment
-```bash
-# macOS/Linux
-python3 -m venv venv
-source venv/bin/activate
-
-# Windows
-python -m venv venv
-venv\Scripts\activate
-```
-
-### 3️⃣ Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4️⃣ Setup Environment Variables
-Create a `.env` file in the root configuration with the following keys:
-```env
-# Example .env Configuration
-OPENWEATHERMAP_API_KEY=your_openweathermap_api_key
-TOMTOM_API_KEY=your_tomtom_api_key
-DATABASE_URL=sqlite:///./routewise.db
-```
-
-### 5️⃣ Boot the Server Launch
-Start the highly-concurrent backend API using Uvicorn:
-```bash
-export PYTHONPATH=. 
-uvicorn backend.main:app --reload
-```
-
-Then open your browser and navigate to exactly: **`http://localhost:8000`**
-
----
-
-## 🤝 **CONTRIBUTING**
-
-Contributions are perfectly welcome! Since RouteWise AI is a PBL educational initiative, if you'd like to extend its ML components or UI styling further:
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-<p align="center">
-  <b>🚀 Made by Team MapSquad</b><br>
-  <a href="https://www.linkedin.com/in/23nandan/">Nandan Garg</a> · 
-  <a href="https://www.linkedin.com/in/ayushjuyal/">Ayush Juyal</a> · 
-  <a href="https://www.linkedin.com/in/avishpradhan0014/">Avish Pradhan</a>
-</p>
