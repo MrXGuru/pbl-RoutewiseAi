@@ -258,7 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch('/predict-delay/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || 'Backend error'); }
+            if (!response.ok) { 
+                const errorText = await response.text();
+                let errorMsg = 'Backend error';
+                try { errorMsg = JSON.parse(errorText).detail || errorMsg; } catch(_) { errorMsg = errorText || errorMsg; }
+                throw new Error(errorMsg); 
+            }
             const data = await response.json();
             
             lastContext.distance_km = data.distance_km;
@@ -379,7 +384,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(payload) 
             });
-            if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || 'Backend error'); }
+            if (!response.ok) { 
+                const errorText = await response.text();
+                let errorMsg = 'Backend error';
+                try { errorMsg = JSON.parse(errorText).detail || errorMsg; } catch(_) { errorMsg = errorText || errorMsg; }
+                throw new Error(errorMsg); 
+            }
             const data = await response.json();
             const resultHTML = `<ol class="list-decimal list-inside space-y-2">${data.optimized_stops.map(d => `<li class="text-lg p-2 bg-gray-800/40 rounded-md">${d.name}</li>`).join('')}</ol>`;
             showResults('Optimized Route', resultHTML);

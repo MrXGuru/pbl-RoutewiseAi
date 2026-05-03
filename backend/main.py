@@ -534,137 +534,143 @@ def reverse_geocode_api(lat: float, lon: float):
 @app.post("/predict-delay/")
 async def predict_travel_delay(req: DelayRequest):
     """Predicts travel delay based on various factors."""
-    if req.origin_lat is not None and req.origin_lon is not None:
-        origin_lat, origin_lon = req.origin_lat, req.origin_lon
-    else:
-        origin_lat, origin_lon = geocode_place(req.origin)
-        
-    dest_lat, dest_lon = geocode_place(req.destination)
-
-    if not all([origin_lat, origin_lon, dest_lat, dest_lon]):
-        raise HTTPException(status_code=400, detail="Could not geocode origin or destination.")
-
-    base_travel_sec, traffic_delay_sec, distance_km, route_path = get_route_info((origin_lat, origin_lon), (dest_lat, dest_lon))
-    if base_travel_sec is None:
-        raise HTTPException(status_code=500, detail="Could not calculate base route information.")
-
-    # Convert departure timestamp to proper datetime format
-    import datetime
     try:
-        depart_dt = datetime.datetime.strptime(req.timestamp, "%Y-%m-%d %H:%M")
-    except:
-        depart_dt = datetime.datetime.now()
-
-    segments = []
-    weather_segments = []  # Detailed weather per chunk for the frontend
-    NUM_CHUNKS = 6
-
-    # 1. ROUTE SEGMENTATION
-    # route_path contains list of (lat, lon)
-    if route_path and len(route_path) >= NUM_CHUNKS + 1:
-        # Pick NUM_CHUNKS+1 evenly spaced points along the path
-        path_len = len(route_path)
-        point_indices = [int(i * (path_len - 1) / NUM_CHUNKS) for i in range(NUM_CHUNKS + 1)]
-        points = [route_path[idx] for idx in point_indices]
-        
-        chunk_duration_sec = base_travel_sec / NUM_CHUNKS
-        chunk_labels = [f"Segment {i+1}" for i in range(NUM_CHUNKS)]
-
-        # Build segment metadata
-        seg_meta = []
-        for i in range(NUM_CHUNKS):
-            target_time = depart_dt + datetime.timedelta(seconds=(i + 1) * chunk_duration_sec)
-            lat, lon = points[i+1]
-            seg_meta.append({"i": i, "lat": lat, "lon": lon, "target_time": target_time})
-
-        # PARALLEL: Fetch all weather forecasts + reverse geocode calls at once
-        async with aiohttp.ClientSession() as session:
-            weather_tasks = [
-                async_get_combined_forecast(session, m["lat"], m["lon"], m["target_time"])
-                for m in seg_meta
-            ]
-            geocode_tasks = [
-                asyncio.to_thread(reverse_geocode, m["lat"], m["lon"])
-                for m in seg_meta
-            ]
-            all_results = await asyncio.gather(*weather_tasks, *geocode_tasks)
-
-        # Split results: first NUM_CHUNKS are weather, next NUM_CHUNKS are geocode
-        weather_results = all_results[:NUM_CHUNKS]
-        geocode_results = all_results[NUM_CHUNKS:]
-
-        for i, m in enumerate(seg_meta):
-            forecast = weather_results[i]
-            seg_weather = forecast["weather_label"]
-            detailed = forecast["detailed"]
-            seg_location = geocode_results[i] or f"{m['lat']:.2f}, {m['lon']:.2f}"
+        if req.origin_lat is not None and req.origin_lon is not None:
+            origin_lat, origin_lon = req.origin_lat, req.origin_lon
+        else:
+            origin_lat, origin_lon = geocode_place(req.origin)
             
-            # Only first 3 segments feed into the ML model (model expects 3)
-            if i < 3:
-                segments.append({
-                    "distance_km": distance_km / NUM_CHUNKS,
-                    "traffic_level": normalize_traffic_delay(traffic_delay_sec),
-                    "weather": seg_weather,
-                    "timestamp_obj": m["target_time"]
+        dest_lat, dest_lon = geocode_place(req.destination)
+
+        if not all([origin_lat, origin_lon, dest_lat, dest_lon]):
+            raise HTTPException(status_code=400, detail="Could not geocode origin or destination.")
+
+        base_travel_sec, traffic_delay_sec, distance_km, route_path = get_route_info((origin_lat, origin_lon), (dest_lat, dest_lon))
+        if base_travel_sec is None:
+            raise HTTPException(status_code=500, detail="Could not calculate base route information.")
+
+        # Convert departure timestamp to proper datetime format
+        import datetime
+        try:
+            depart_dt = datetime.datetime.strptime(req.timestamp, "%Y-%m-%d %H:%M")
+        except:
+            depart_dt = datetime.datetime.now()
+
+        segments = []
+        weather_segments = []  # Detailed weather per chunk for the frontend
+        NUM_CHUNKS = 6
+
+        # 1. ROUTE SEGMENTATION
+        # route_path contains list of (lat, lon)
+        if route_path and len(route_path) >= NUM_CHUNKS + 1:
+            # Pick NUM_CHUNKS+1 evenly spaced points along the path
+            path_len = len(route_path)
+            point_indices = [int(i * (path_len - 1) / NUM_CHUNKS) for i in range(NUM_CHUNKS + 1)]
+            points = [route_path[idx] for idx in point_indices]
+            
+            chunk_duration_sec = base_travel_sec / NUM_CHUNKS
+            chunk_labels = [f"Segment {i+1}" for i in range(NUM_CHUNKS)]
+
+            # Build segment metadata
+            seg_meta = []
+            for i in range(NUM_CHUNKS):
+                target_time = depart_dt + datetime.timedelta(seconds=(i + 1) * chunk_duration_sec)
+                lat, lon = points[i+1]
+                seg_meta.append({"i": i, "lat": lat, "lon": lon, "target_time": target_time})
+
+            # PARALLEL: Fetch all weather forecasts + reverse geocode calls at once
+            async with aiohttp.ClientSession() as session:
+                weather_tasks = [
+                    async_get_combined_forecast(session, m["lat"], m["lon"], m["target_time"])
+                    for m in seg_meta
+                ]
+                geocode_tasks = [
+                    asyncio.to_thread(reverse_geocode, m["lat"], m["lon"])
+                    for m in seg_meta
+                ]
+                all_results = await asyncio.gather(*weather_tasks, *geocode_tasks)
+
+            # Split results: first NUM_CHUNKS are weather, next NUM_CHUNKS are geocode
+            weather_results = all_results[:NUM_CHUNKS]
+            geocode_results = all_results[NUM_CHUNKS:]
+
+            for i, m in enumerate(seg_meta):
+                forecast = weather_results[i]
+                seg_weather = forecast["weather_label"]
+                detailed = forecast["detailed"]
+                seg_location = geocode_results[i] or f"{m['lat']:.2f}, {m['lon']:.2f}"
+                
+                # Only first 3 segments feed into the ML model (model expects 3)
+                if i < 3:
+                    segments.append({
+                        "distance_km": distance_km / NUM_CHUNKS,
+                        "traffic_level": normalize_traffic_delay(traffic_delay_sec),
+                        "weather": seg_weather,
+                        "timestamp_obj": m["target_time"]
+                    })
+
+                weather_segments.append({
+                    "segment_number": i + 1,
+                    "segment_label": chunk_labels[i],
+                    "location": seg_location,
+                    "lat": m["lat"],
+                    "lon": m["lon"],
+                    "estimated_arrival": m["target_time"].strftime("%Y-%m-%d %H:%M"),
+                    "distance_km": round(distance_km / NUM_CHUNKS, 1),
+                    "severity": get_weather_severity(detailed.get("condition", "clear")),
+                    **detailed
                 })
+        else:
+            # Fallback to simple unsegmented calculation if path is missing
+            fallback_time = depart_dt + datetime.timedelta(seconds=base_travel_sec)
+            seg_weather = get_forecast_by_coords(dest_lat, dest_lon, fallback_time)
+            detailed = get_detailed_forecast_by_coords(dest_lat, dest_lon, fallback_time)
+
+            segments.append({
+                "distance_km": distance_km,
+                "traffic_level": normalize_traffic_delay(traffic_delay_sec),
+                "weather": seg_weather,
+                "timestamp_obj": fallback_time
+            })
 
             weather_segments.append({
-                "segment_number": i + 1,
-                "segment_label": chunk_labels[i],
-                "location": seg_location,
-                "lat": m["lat"],
-                "lon": m["lon"],
-                "estimated_arrival": m["target_time"].strftime("%Y-%m-%d %H:%M"),
-                "distance_km": round(distance_km / NUM_CHUNKS, 1),
+                "segment_number": 1,
+                "segment_label": "Full Route",
+                "location": req.destination,
+                "lat": dest_lat,
+                "lon": dest_lon,
+                "estimated_arrival": fallback_time.strftime("%Y-%m-%d %H:%M"),
+                "distance_km": round(distance_km, 1),
                 "severity": get_weather_severity(detailed.get("condition", "clear")),
                 **detailed
             })
-    else:
-        # Fallback to simple unsegmented calculation if path is missing
-        fallback_time = depart_dt + datetime.timedelta(seconds=base_travel_sec)
-        seg_weather = get_forecast_by_coords(dest_lat, dest_lon, fallback_time)
-        detailed = get_detailed_forecast_by_coords(dest_lat, dest_lon, fallback_time)
 
-        segments.append({
-            "distance_km": distance_km,
+        predicted_delay, confidence, final_weather_score = predict_route_segments(segments)
+        
+        base_travel_minutes = base_travel_sec / 60
+        total_time = base_travel_minutes + predicted_delay
+
+        return {
+            "base_travel_minutes": base_travel_minutes,
+            "predicted_delay_minutes": predicted_delay,
+            "total_estimated_time": total_time,
+            "weather": segments[-1]["weather"] if segments else get_weather(req.destination),
+            "weather_score": final_weather_score,
+            "weather_segments": weather_segments,
             "traffic_level": normalize_traffic_delay(traffic_delay_sec),
-            "weather": seg_weather,
-            "timestamp_obj": fallback_time
-        })
-
-        weather_segments.append({
-            "segment_number": 1,
-            "segment_label": "Full Route",
-            "location": req.destination,
-            "lat": dest_lat,
-            "lon": dest_lon,
-            "estimated_arrival": fallback_time.strftime("%Y-%m-%d %H:%M"),
-            "distance_km": round(distance_km, 1),
-            "severity": get_weather_severity(detailed.get("condition", "clear")),
-            **detailed
-        })
-
-    predicted_delay, confidence, final_weather_score = predict_route_segments(segments)
-    
-    base_travel_minutes = base_travel_sec / 60
-    total_time = base_travel_minutes + predicted_delay
-
-    return {
-        "base_travel_minutes": base_travel_minutes,
-        "predicted_delay_minutes": predicted_delay,
-        "total_estimated_time": total_time,
-        "weather": segments[-1]["weather"] if segments else get_weather(req.destination),
-        "weather_score": final_weather_score,
-        "weather_segments": weather_segments,
-        "traffic_level": normalize_traffic_delay(traffic_delay_sec),
-        "confidence_score": confidence,
-        "distance_km": distance_km,
-        "stops": [
-            {"name": req.origin, "lat": origin_lat, "lon": origin_lon},
-            {"name": req.destination, "lat": dest_lat, "lon": dest_lon}
-        ],
-        "route_path": route_path
-    }
+            "confidence_score": confidence,
+            "distance_km": distance_km,
+            "stops": [
+                {"name": req.origin, "lat": origin_lat, "lon": origin_lon},
+                {"name": req.destination, "lat": dest_lat, "lon": dest_lon}
+            ],
+            "route_path": route_path
+        }
+    except HTTPException:
+        raise  # Let FastAPI handle these properly (they already return JSON)
+    except Exception as e:
+        print(f"[PREDICT-DELAY ERROR] {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
