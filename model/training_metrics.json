@@ -1,0 +1,53 @@
+{
+  "mae": 12.0731,
+  "rmse": 18.7288,
+  "r2": 0.8872,
+  "best_params": {
+    "max_depth": 15,
+    "min_samples_leaf": 2,
+    "min_samples_split": 5,
+    "n_estimators": 300
+  },
+  "feature_importance": [
+    {
+      "feature": "distance_weather_risk",
+      "importance": 0.5439102567626847
+    },
+    {
+      "feature": "traffic_level",
+      "importance": 0.32235362274006163
+    },
+    {
+      "feature": "distance_km",
+      "importance": 0.061457325329364196
+    },
+    {
+      "feature": "day_of_week",
+      "importance": 0.044808491466440684
+    },
+    {
+      "feature": "hour_of_day",
+      "importance": 0.01282638849687531
+    },
+    {
+      "feature": "rush_hour_traffic",
+      "importance": 0.008244027017791013
+    },
+    {
+      "feature": "traffic_weather_interaction",
+      "importance": 0.005564054154369492
+    },
+    {
+      "feature": "is_rush_hour",
+      "importance": 0.000632381146678317
+    },
+    {
+      "feature": "weather_encoded",
+      "importance": 0.00020345288573455367
+    }
+  ],
+  "train_samples": 94080,
+  "test_samples": 23520,
+  "total_cities": 30,
+  "trained_at": "2026-05-03T22:59:03.172462"
+}
