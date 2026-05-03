@@ -443,43 +443,85 @@ def save_outputs(model, df, metrics):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# STEP 5: Synthetic Route Generator (for --quick / Docker builds)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def generate_synthetic_routes():
+    """Generate synthetic routes for ALL city pairs using haversine distance.
+    No API calls needed — runs in seconds. Used for Docker/Render builds."""
+    print("⚡ Generating synthetic routes (no API calls)...")
+    raw_routes = []
+    for i in range(len(cities)):
+        for j in range(len(cities)):
+            if i == j:
+                continue
+            from_name, lat1, lon1 = cities[i]
+            to_name, lat2, lon2 = cities[j]
+
+            # Haversine distance
+            import math
+            R = 6371
+            phi1, phi2 = math.radians(lat1), math.radians(lat2)
+            dphi = math.radians(lat2 - lat1)
+            dlambda = math.radians(lon2 - lon1)
+            a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+            dist_km = R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+            dist_km *= random.uniform(1.2, 1.5)  # road multiplier
+
+            # Realistic synthetic values
+            avg_speed = random.uniform(40, 70)  # km/h
+            base_travel_sec = int(dist_km / avg_speed * 3600)
+            traffic_delay_sec = random.randint(0, int(dist_km * 25))
+
+            raw_routes.append({
+                "from_city": from_name,
+                "to_city": to_name,
+                "from_lat": lat1, "from_lon": lon1,
+                "to_lat": lat2, "to_lon": lon2,
+                "distance_km": round(dist_km, 2),
+                "base_travel_time_sec": base_travel_sec,
+                "traffic_delay_sec": traffic_delay_sec,
+                "weather": random.choice(ALL_WEATHER_CONDITIONS),
+                "temperature": random.uniform(15, 42),
+                "humidity": random.randint(20, 95),
+                "wind_speed": random.uniform(0, 15),
+            })
+
+    print(f"   📊 Generated {len(raw_routes)} synthetic route pairs")
+    return raw_routes
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="RouteWiseAI ML Training Pipeline")
+    parser.add_argument(
+        "--quick", action="store_true",
+        help="Quick mode: use synthetic data only (no API calls). For Docker/Render builds."
+    )
+    args = parser.parse_args()
+
     print("=" * 70)
     print("  RouteWiseAI — ML Model Training Pipeline")
+    print(f"  Mode: {'⚡ QUICK (synthetic)' if args.quick else '🌐 FULL (real API data)'}")
     print("=" * 70)
     start_time = time.time()
 
-    # Step 1: Fetch real route data from APIs
-    raw_routes = fetch_all_routes()
+    if args.quick:
+        # Quick mode: synthetic data only, no API calls (~30 seconds)
+        raw_routes = generate_synthetic_routes()
+    else:
+        # Full mode: fetch real data from TomTom + OpenWeatherMap APIs
+        raw_routes = fetch_all_routes()
 
-    if len(raw_routes) < 10:
-        print("\n⚠️  Too few routes fetched. Check API keys / network.")
-        print("    Proceeding with synthetic-only data for development...\n")
-        # Generate minimal synthetic routes for offline dev
-        raw_routes = []
-        for i in range(len(cities)):
-            for j in range(len(cities)):
-                if i != j and random.random() < 0.15:
-                    from_name, lat1, lon1 = cities[i]
-                    to_name, lat2, lon2 = cities[j]
-                    dist = ((lat2 - lat1)**2 + (lon2 - lon1)**2)**0.5 * 111  # rough km
-                    raw_routes.append({
-                        "from_city": from_name,
-                        "to_city": to_name,
-                        "from_lat": lat1, "from_lon": lon1,
-                        "to_lat": lat2, "to_lon": lon2,
-                        "distance_km": round(dist, 2),
-                        "base_travel_time_sec": int(dist / 60 * 3600),
-                        "traffic_delay_sec": random.randint(0, int(dist * 30)),
-                        "weather": random.choice(ALL_WEATHER_CONDITIONS),
-                        "temperature": random.uniform(15, 42),
-                        "humidity": random.randint(20, 95),
-                        "wind_speed": random.uniform(0, 15),
-                    })
-        print(f"   Generated {len(raw_routes)} synthetic route pairs.\n")
+        if len(raw_routes) < 10:
+            print("\n⚠️  Too few routes fetched. Check API keys / network.")
+            print("    Falling back to synthetic data...\n")
+            raw_routes = generate_synthetic_routes()
 
     # Step 2: Augment into large training dataset
     df = augment_data(raw_routes)

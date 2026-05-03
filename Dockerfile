@@ -23,6 +23,9 @@ RUN pip install --no-cache-dir --default-timeout=100 -r new_requirement.txt
 # Copy the rest of the application
 COPY . .
 
+# Generate ML model at build time (quick mode = synthetic data, no API calls, ~30s)
+RUN python train_model.py --quick
+
 # Expose port (default FastAPI/uvicorn port is 8000)
 EXPOSE 8000
 
